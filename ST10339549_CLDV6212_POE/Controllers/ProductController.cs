@@ -1,24 +1,21 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ST10339549_CLDV6212_POE.Interfaces;
 using ST10339549_CLDV6212_POE.Models;
 
 namespace ST10339549_CLDV6212_POE.Controllers
 {
     public class ProductController : Controller
     {
-        private readonly HttpClient _httpClient;
-        private readonly string _azureFunctionUrl;
-        private readonly string _functionKey;
+        private readonly IProductRepository _productRepository;
 
-        public ProductController(HttpClient httpClient, IConfiguration configuration)
+        public ProductController(IProductRepository productRepository)
         {
-            _httpClient = httpClient;
-            _azureFunctionUrl = configuration["AzureFunctionSettings:BaseUrl"];
-            _functionKey = configuration["AzureFunctionSettings:ProductFunctionKey"];
+            _productRepository = productRepository;
         }
 
         public async Task<IActionResult> Index()
         {
-            var products = await _httpClient.GetFromJsonAsync<List<Product>>($"{_azureFunctionUrl}api/product/Product?code={_functionKey}");
+            var products = await _productRepository.GetAllProductsAsync();
             return View(products);
         }
 
@@ -30,20 +27,26 @@ namespace ST10339549_CLDV6212_POE.Controllers
         {
             if (ModelState.IsValid)
             {
-                var response = await _httpClient.PostAsJsonAsync($"{_azureFunctionUrl}api/product?code={_functionKey}", product);
-                if (response.IsSuccessStatusCode)
-                {
-                    return RedirectToAction(nameof(Index));
-                }
-                ModelState.AddModelError("", "Failed to create product.");
+                await _productRepository.AddProductAsync(product);
+                return RedirectToAction(nameof(Index));
             }
             return View(product);
         }
 
         [HttpGet]
-        public async Task<IActionResult> Edit(string partitionKey, string rowKey)
+        public async Task<IActionResult> Edit(string productId)
         {
-            var product = await _httpClient.GetFromJsonAsync<Product>($"{_azureFunctionUrl}api/product/{partitionKey}/{rowKey}?code={_functionKey}");
+            if (string.IsNullOrEmpty(productId))
+            {
+                return NotFound("Product ID cannot be null or empty.");
+            }
+
+            var product = await _productRepository.GetProductByIdAsync(productId);
+            if (product == null)
+            {
+                return NotFound("Product not found.");
+            }
+
             return View(product);
         }
 
@@ -52,34 +55,39 @@ namespace ST10339549_CLDV6212_POE.Controllers
         {
             if (ModelState.IsValid)
             {
-                var response = await _httpClient.PutAsJsonAsync($"{_azureFunctionUrl}api/product/{product.PartitionKey}/{product.RowKey}?code={_functionKey}", product);
-                if (response.IsSuccessStatusCode)
-                {
-                    return RedirectToAction(nameof(Index));
-                }
-                ModelState.AddModelError("", "Failed to update product.");
+                await _productRepository.UpdateProductAsync(product);
+                return RedirectToAction(nameof(Index));
             }
             return View(product);
         }
 
         [HttpGet]
-        public async Task<IActionResult> Delete(string partitionKey, string rowKey)
+        public async Task<IActionResult> Delete(string productId)
         {
-            var product = await _httpClient.GetFromJsonAsync<Product>($"{_azureFunctionUrl}api/product/{partitionKey}/{rowKey}?code={_functionKey}");
+            if (string.IsNullOrEmpty(productId))
+            {
+                return NotFound("Product ID cannot be null or empty.");
+            }
+
+            var product = await _productRepository.GetProductByIdAsync(productId);
+            if (product == null)
+            {
+                return NotFound("Product not found.");
+            }
+
             return View(product);
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(string partitionKey, string rowKey)
+        [HttpPost, ActionName("Delete")]
+        public async Task<IActionResult> DeleteConfirmed(string productId)
         {
-            var response = await _httpClient.DeleteAsync($"{_azureFunctionUrl}api/product/{partitionKey}/{rowKey}?code={_functionKey}");
-            if (response.IsSuccessStatusCode)
+            if (string.IsNullOrEmpty(productId))
             {
-                return RedirectToAction(nameof(Index));
+                return NotFound("Product ID cannot be null or empty.");
             }
-            ModelState.AddModelError("", "Failed to delete product.");
-            return View();
+
+            await _productRepository.DeleteProductAsync(productId);
+            return RedirectToAction(nameof(Index));
         }
     }
 }

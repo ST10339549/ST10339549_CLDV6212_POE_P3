@@ -3,18 +3,22 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ST10339549_CLDV6212_POE.Models
 {
-  public class Customer : TableEntity
-  {
-    [Required]
-    public string? CustomerId { get; set; }
-    public string CustomerName { get; set; }
-    public string CustomerSurname { get; set; }
-    public string CustomerEmail { get; set; }
-    public string CustomerAddress { get; set; }
-    public Customer()
+    public class Customer : TableEntity
     {
-      PartitionKey = "Customer";
-      RowKey = CustomerId ?? Guid.NewGuid().ToString();
+        [Key]
+        public string? CustomerId { get; set; }
+
+        [Required]
+        public string? CustomerName { get; set; }
+
+        [Required]
+        public string? CustomerSurname { get; set; }
+
+        [Required]
+        [EmailAddress]
+        public string? CustomerEmail { get; set; }
+
+        [Required]
+        public string? CustomerAddress { get; set; }
     }
-  }
 }

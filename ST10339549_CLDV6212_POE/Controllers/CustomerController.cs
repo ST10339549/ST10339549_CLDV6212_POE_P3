@@ -1,24 +1,21 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ST10339549_CLDV6212_POE.Interfaces;
 using ST10339549_CLDV6212_POE.Models;
 
 namespace ST10339549_CLDV6212_POE.Controllers
 {
     public class CustomerController : Controller
     {
-        private readonly HttpClient _httpClient;
-        private readonly string _azureFunctionUrl;
-        private readonly string _functionKey;
+        private readonly ICustomerRepository _customerRepository;
 
-        public CustomerController(HttpClient httpClient, IConfiguration configuration)
+        public CustomerController(ICustomerRepository customerRepository)
         {
-            _httpClient = httpClient;
-            _azureFunctionUrl = configuration["AzureFunctionSettings:BaseUrl"];
-            _functionKey = configuration["AzureFunctionSettings:CustomerFunctionKey"];
+            _customerRepository = customerRepository;
         }
 
         public async Task<IActionResult> Index()
         {
-            var customers = await _httpClient.GetFromJsonAsync<List<Customer>>($"{_azureFunctionUrl}api/customer/Customer?code={_functionKey}");
+            var customers = await _customerRepository.GetAllCustomersAsync();
             return View(customers);
         }
 
@@ -30,23 +27,26 @@ namespace ST10339549_CLDV6212_POE.Controllers
         {
             if (ModelState.IsValid)
             {
-                var response = await _httpClient.PostAsJsonAsync($"{_azureFunctionUrl}api/customer/Customer?code={_functionKey}", customer);
-                if (response.IsSuccessStatusCode)
-                {
-                    return RedirectToAction(nameof(Index));
-                }
-                else
-                {
-                    ModelState.AddModelError("", "Failed to create customer.");
-                }
+                await _customerRepository.AddCustomerAsync(customer);
+                return RedirectToAction(nameof(Index));
             }
             return View(customer);
         }
 
         [HttpGet]
-        public async Task<IActionResult> Edit(string partitionKey, string rowKey)
+        public async Task<IActionResult> Edit(string customerId)
         {
-            var customer = await _httpClient.GetFromJsonAsync<Customer>($"{_azureFunctionUrl}api/customer/{partitionKey}/{rowKey}?code={_functionKey}");
+            if (string.IsNullOrEmpty(customerId))
+            {
+                return NotFound("Customer ID cannot be null or empty.");
+            }
+
+            var customer = await _customerRepository.GetCustomerByIdAsync(customerId);
+            if (customer == null)
+            {
+                return NotFound("Customer not found.");
+            }
+
             return View(customer);
         }
 
@@ -55,33 +55,28 @@ namespace ST10339549_CLDV6212_POE.Controllers
         {
             if (ModelState.IsValid)
             {
-                var response = await _httpClient.PutAsJsonAsync($"{_azureFunctionUrl}api/customer/{customer.PartitionKey}/{customer.RowKey}?code={_functionKey}", customer);
-                if (response.IsSuccessStatusCode)
-                {
-                    return RedirectToAction(nameof(Index));
-                }
-                ModelState.AddModelError("", "Failed to update customer.");
+                await _customerRepository.UpdateCustomerAsync(customer);
+                return RedirectToAction(nameof(Index));
             }
             return View(customer);
         }
 
         [HttpGet]
-        public async Task<IActionResult> Delete(string partitionKey, string rowKey)
+        public async Task<IActionResult> Delete(string customerId)
         {
-            var customer = await _httpClient.GetFromJsonAsync<Customer>($"{_azureFunctionUrl}api/customer/{partitionKey}/{rowKey}?code={_functionKey}");
+            var customer = await _customerRepository.GetCustomerByIdAsync(customerId);
+            if (customer == null)
+            {
+                return NotFound();
+            }
             return View(customer);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Delete(Customer customer)
+        [HttpPost, ActionName("Delete")]
+        public async Task<IActionResult> DeleteConfirmed(string customerId)
         {
-            var response = await _httpClient.DeleteAsync($"{_azureFunctionUrl}api/customer/{customer.PartitionKey}/{customer.RowKey}?code={_functionKey}");
-            if (response.IsSuccessStatusCode)
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            ModelState.AddModelError("", "Failed to delete customer.");
-            return View(customer);
+            await _customerRepository.DeleteCustomerAsync(customerId);
+            return RedirectToAction(nameof(Index));
         }
     }
 }

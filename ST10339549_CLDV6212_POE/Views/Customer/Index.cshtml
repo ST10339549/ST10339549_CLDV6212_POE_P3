@@ -32,13 +32,24 @@
                             <td>@customer.CustomerEmail</td>
                             <td>@customer.CustomerAddress</td>
                             <td class="text-center">
-                                <a class="btn btn-outline-primary btn-sm me-2" asp-action="Edit" asp-route-partitionKey="@customer.PartitionKey" asp-route-rowKey="@customer.RowKey" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Customer">
+                                <a class="btn btn-outline-primary btn-sm me-2"
+                                   asp-action="Edit"
+                                   asp-route-customerId="@customer.CustomerId"
+                                   data-bs-toggle="tooltip"
+                                   data-bs-placement="top"
+                                   title="Edit Customer">
                                     <i class="fas fa-edit"></i> Edit
                                 </a>
-                                <a class="btn btn-outline-danger btn-sm" asp-action="Delete" asp-route-partitionKey="@customer.PartitionKey" asp-route-rowKey="@customer.RowKey" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete Customer">
+                                <a class="btn btn-outline-danger btn-sm"
+                                   asp-action="Delete"
+                                   asp-route-customerId="@customer.CustomerId"
+                                   data-bs-toggle="tooltip"
+                                   data-bs-placement="top"
+                                   title="Delete Customer">
                                     <i class="fas fa-trash-alt"></i> Delete
                                 </a>
                             </td>
+
                         </tr>
                     }
                 </tbody>

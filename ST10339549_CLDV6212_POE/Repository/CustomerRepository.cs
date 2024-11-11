@@ -17,10 +17,16 @@ namespace ST10339549_CLDV6212_POE.Repository
 
         public async Task AddCustomerAsync(Customer customer)
         {
+            if (string.IsNullOrEmpty(customer.CustomerId))
+            {
+                customer.CustomerId = await GenerateCustomerIdAsync();
+            }
+
             using IDbConnection connection = _dbConnection.CreateConnection();
             var query = "INSERT INTO Customers (CustomerId, CustomerName, CustomerSurname, CustomerEmail, CustomerAddress) VALUES (@CustomerId, @CustomerName, @CustomerSurname, @CustomerEmail, @CustomerAddress)";
             await connection.ExecuteAsync(query, customer);
         }
+
 
         public async Task<Customer> GetCustomerByIdAsync(string customerId)
         {
@@ -48,6 +54,24 @@ namespace ST10339549_CLDV6212_POE.Repository
             using IDbConnection connection = _dbConnection.CreateConnection();
             var query = "DELETE FROM Customers WHERE CustomerId = @CustomerId";
             await connection.ExecuteAsync(query, new { CustomerId = customerId });
+        }
+
+        public async Task<string> GenerateCustomerIdAsync()
+        {
+            using IDbConnection connection = _dbConnection.CreateConnection();
+
+            var query = "SELECT TOP 1 CustomerId FROM Customers ORDER BY CustomerId DESC";
+            var lastCustomerId = await connection.QueryFirstOrDefaultAsync<string>(query);
+
+            if (string.IsNullOrEmpty(lastCustomerId))
+            {
+                return "C001";
+            }
+
+            int numericPart = int.Parse(lastCustomerId.Substring(1));
+            numericPart++;
+
+            return $"C{numericPart.ToString("D3")}";
         }
     }
 }
