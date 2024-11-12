@@ -1,0 +1,44 @@
+﻿@model ST10339549_CLDV6212_POE.Models.OrderMessage
+
+<div class="container">
+    <h2>Edit Order Action</h2>
+
+    <form asp-action="Edit" method="post">
+        <!-- Display Order ID as read-only -->
+        <div class="form-group">
+            <label>Order ID</label>
+            <input type="text" asp-for="OrderId" class="form-control" readonly />
+        </div>
+
+        <!-- Display Product ID as read-only -->
+        <div class="form-group">
+            <label>Product ID</label>
+            <input type="text" asp-for="ProductId" class="form-control" readonly />
+        </div>
+
+        <!-- Display Quantity as read-only -->
+        <div class="form-group">
+            <label>Quantity</label>
+            <input type="number" asp-for="Quantity" class="form-control" readonly />
+        </div>
+
+        <!-- Display Timestamp as read-only -->
+        <div class="form-group">
+            <label>Timestamp</label>
+            <input type="text" asp-for="Timestamp" class="form-control" readonly />
+        </div>
+
+        <!-- Editable Action dropdown -->
+        <div class="form-group">
+            <label for="Action">Action</label>
+            <select asp-for="Action" class="form-control" required>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3">Save Changes</button>
+        <a asp-action="Index" class="btn btn-secondary mt-3">Cancel</a>
+    </form>
+</div>
