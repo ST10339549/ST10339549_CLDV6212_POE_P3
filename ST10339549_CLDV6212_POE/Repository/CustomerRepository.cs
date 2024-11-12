@@ -27,7 +27,6 @@ namespace ST10339549_CLDV6212_POE.Repository
             await connection.ExecuteAsync(query, customer);
         }
 
-
         public async Task<Customer> GetCustomerByIdAsync(string customerId)
         {
             using IDbConnection connection = _dbConnection.CreateConnection();
